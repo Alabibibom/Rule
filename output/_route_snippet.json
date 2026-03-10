@@ -1,0 +1,360 @@
+{
+  "_comment": "将 rule_set 和 rules 合并进你的 sing-box config.json",
+  "route": {
+    "rule_set": [
+      {
+        "type": "local",
+        "tag": "find_my",
+        "format": "source",
+        "path": "./ruleset/find_my.json"
+      },
+      {
+        "type": "local",
+        "tag": "lan_non_ip",
+        "format": "source",
+        "path": "./ruleset/lan_non_ip.json"
+      },
+      {
+        "type": "local",
+        "tag": "lan_ip",
+        "format": "source",
+        "path": "./ruleset/lan_ip.json"
+      },
+      {
+        "type": "local",
+        "tag": "siri",
+        "format": "source",
+        "path": "./ruleset/siri.json"
+      },
+      {
+        "type": "local",
+        "tag": "system_ota",
+        "format": "source",
+        "path": "./ruleset/system_ota.json"
+      },
+      {
+        "type": "local",
+        "tag": "reject_drop",
+        "format": "source",
+        "path": "./ruleset/reject_drop.json"
+      },
+      {
+        "type": "local",
+        "tag": "reject_domain",
+        "format": "source",
+        "path": "./ruleset/reject_domain.json"
+      },
+      {
+        "type": "local",
+        "tag": "reject_non_ip",
+        "format": "source",
+        "path": "./ruleset/reject_non_ip.json"
+      },
+      {
+        "type": "local",
+        "tag": "reject_no_drop",
+        "format": "source",
+        "path": "./ruleset/reject_no_drop.json"
+      },
+      {
+        "type": "local",
+        "tag": "reject_ip",
+        "format": "source",
+        "path": "./ruleset/reject_ip.json"
+      },
+      {
+        "type": "local",
+        "tag": "synology",
+        "format": "source",
+        "path": "./ruleset/synology.json"
+      },
+      {
+        "type": "local",
+        "tag": "ai",
+        "format": "source",
+        "path": "./ruleset/ai.json"
+      },
+      {
+        "type": "local",
+        "tag": "apple_intelligence",
+        "format": "source",
+        "path": "./ruleset/apple_intelligence.json"
+      },
+      {
+        "type": "local",
+        "tag": "github",
+        "format": "source",
+        "path": "./ruleset/github.json"
+      },
+      {
+        "type": "local",
+        "tag": "douyin",
+        "format": "source",
+        "path": "./ruleset/douyin.json"
+      },
+      {
+        "type": "local",
+        "tag": "bilibili",
+        "format": "source",
+        "path": "./ruleset/bilibili.json"
+      },
+      {
+        "type": "local",
+        "tag": "youtube",
+        "format": "source",
+        "path": "./ruleset/youtube.json"
+      },
+      {
+        "type": "local",
+        "tag": "google",
+        "format": "source",
+        "path": "./ruleset/google.json"
+      },
+      {
+        "type": "local",
+        "tag": "tiktok",
+        "format": "source",
+        "path": "./ruleset/tiktok.json"
+      },
+      {
+        "type": "local",
+        "tag": "telegram_non_ip",
+        "format": "source",
+        "path": "./ruleset/telegram_non_ip.json"
+      },
+      {
+        "type": "local",
+        "tag": "telegram_ip",
+        "format": "source",
+        "path": "./ruleset/telegram_ip.json"
+      },
+      {
+        "type": "local",
+        "tag": "telegram_asn",
+        "format": "source",
+        "path": "./ruleset/telegram_asn.json"
+      },
+      {
+        "type": "local",
+        "tag": "wechat",
+        "format": "source",
+        "path": "./ruleset/wechat.json"
+      },
+      {
+        "type": "local",
+        "tag": "apple_cn",
+        "format": "source",
+        "path": "./ruleset/apple_cn.json"
+      },
+      {
+        "type": "local",
+        "tag": "appstore",
+        "format": "source",
+        "path": "./ruleset/appstore.json"
+      },
+      {
+        "type": "local",
+        "tag": "apple_services",
+        "format": "source",
+        "path": "./ruleset/apple_services.json"
+      },
+      {
+        "type": "local",
+        "tag": "apple_cdn",
+        "format": "source",
+        "path": "./ruleset/apple_cdn.json"
+      },
+      {
+        "type": "local",
+        "tag": "microsoft",
+        "format": "source",
+        "path": "./ruleset/microsoft.json"
+      },
+      {
+        "type": "local",
+        "tag": "microsoft_cdn",
+        "format": "source",
+        "path": "./ruleset/microsoft_cdn.json"
+      },
+      {
+        "type": "local",
+        "tag": "speedtest",
+        "format": "source",
+        "path": "./ruleset/speedtest.json"
+      },
+      {
+        "type": "local",
+        "tag": "amazon",
+        "format": "source",
+        "path": "./ruleset/amazon.json"
+      },
+      {
+        "type": "local",
+        "tag": "paypal",
+        "format": "source",
+        "path": "./ruleset/paypal.json"
+      },
+      {
+        "type": "local",
+        "tag": "china_domain",
+        "format": "source",
+        "path": "./ruleset/china_domain.json"
+      },
+      {
+        "type": "local",
+        "tag": "china_ip",
+        "format": "source",
+        "path": "./ruleset/china_ip.json"
+      },
+      {
+        "type": "local",
+        "tag": "china_ip_ipv6",
+        "format": "source",
+        "path": "./ruleset/china_ip_ipv6.json"
+      }
+    ],
+    "rules": [
+      {
+        "rule_set": "find_my",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "lan_non_ip",
+        "outbound": "DIRECT"
+      },
+      {
+        "rule_set": "lan_ip",
+        "outbound": "DIRECT"
+      },
+      {
+        "rule_set": "siri",
+        "outbound": "REJECT"
+      },
+      {
+        "rule_set": "system_ota",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "reject_drop",
+        "outbound": "REJECT"
+      },
+      {
+        "rule_set": "reject_domain",
+        "outbound": "REJECT"
+      },
+      {
+        "rule_set": "reject_non_ip",
+        "outbound": "REJECT"
+      },
+      {
+        "rule_set": "reject_no_drop",
+        "outbound": "REJECT"
+      },
+      {
+        "rule_set": "reject_ip",
+        "outbound": "REJECT"
+      },
+      {
+        "rule_set": "synology",
+        "outbound": "群晖官方"
+      },
+      {
+        "rule_set": "ai",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "apple_intelligence",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "github",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "douyin",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "bilibili",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "youtube",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "google",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "tiktok",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "telegram_non_ip",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "telegram_ip",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "telegram_asn",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "wechat",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "apple_cn",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "appstore",
+        "outbound": "苹果商店"
+      },
+      {
+        "rule_set": "apple_services",
+        "outbound": "苹果"
+      },
+      {
+        "rule_set": "apple_cdn",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "microsoft",
+        "outbound": "微软"
+      },
+      {
+        "rule_set": "microsoft_cdn",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "speedtest",
+        "outbound": "测速"
+      },
+      {
+        "rule_set": "amazon",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "paypal",
+        "outbound": "国外"
+      },
+      {
+        "rule_set": "china_domain",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "china_ip",
+        "outbound": "国内"
+      },
+      {
+        "rule_set": "china_ip_ipv6",
+        "outbound": "国内"
+      }
+    ],
+    "final": "国外"
+  }
+}
