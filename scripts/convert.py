@@ -6,9 +6,9 @@ Surge ruleset → sing-box rule_set (JSON source format) converter
 import re, json, sys, time
 from pathlib import Path
 from urllib.request import urlopen, Request
-from urllib.error import URLError
 
 RULES = [
+    # 远程规则
     ("find_my",           "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/FindMy/FindMy.list",           "国内"),
     ("lan_non_ip",        "https://ruleset.skk.moe/List/non_ip/lan.conf",                                                                   "DIRECT"),
     ("lan_ip",            "https://ruleset.skk.moe/List/ip/lan.conf",                                                                       "DIRECT"),
@@ -38,12 +38,23 @@ RULES = [
     ("apple_cdn",         "https://ruleset.skk.moe/List/domainset/apple_cdn.conf",                                                          "国内"),
     ("microsoft",         "https://ruleset.skk.moe/List/non_ip/microsoft.conf",                                                             "微软"),
     ("microsoft_cdn",     "https://ruleset.skk.moe/List/non_ip/microsoft_cdn.conf",                                                         "国内"),
-    ("speedtest",         "https://ruleset.skk.moe/List/domainset/speedtest.conf",                                                           "测速"),
+    ("speedtest",         "https://ruleset.skk.moe/List/domainset/speedtest.conf",                                                          "测速"),
     ("amazon",            "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Amazon/Amazon.list",            "国外"),
     ("paypal",            "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/PayPal/PayPal.list",            "国外"),
     ("china_domain",      "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/direct.txt",                                        "国内"),
     ("china_ip",          "https://ruleset.skk.moe/List/ip/china_ip.conf",                                                                  "国内"),
     ("china_ip_ipv6",     "https://ruleset.skk.moe/List/ip/china_ip_ipv6.conf",                                                             "国内"),
+    # 自定义规则（custom 文件夹）
+    ("deepseek",          "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/DeepSeek.txt",          "国外"),
+    ("obsidian",          "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/Obsidian插件.txt",      "国内"),
+    ("joplin",            "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/Joplin官方.txt",        "Joplin官方"),
+    ("emby",              "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/Emby官方.txt",          "Emby官方"),
+    ("reject_custom",     "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/拒绝联网.txt",          "REJECT"),
+    ("vps",               "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/VPS.txt",               "国内"),
+    ("wuyouxing",         "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/无忧行.txt",            "无忧行"),
+    ("special_cn",        "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/特殊放行国内.txt",      "国内"),
+    ("special_out",       "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/特殊放行国外.txt",      "国外"),
+    ("unlock",            "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/解锁.txt",              "解锁"),
 ]
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; ruleset-converter/1.0)"}
@@ -71,7 +82,6 @@ def parse_surge(lines: list[str]) -> dict:
         if not line or line.startswith("#"):
             continue
 
-        # domainset 格式（纯域名行，没有逗号）
         if "," not in line:
             if line.startswith("."):
                 domain_suffixes.append(line[1:])
@@ -79,7 +89,6 @@ def parse_surge(lines: list[str]) -> dict:
                 domains.append(line)
             continue
 
-        # 去掉行内注释
         line = re.sub(r"\s*#.*$", "", line).strip()
         if not line:
             continue
@@ -99,11 +108,11 @@ def parse_surge(lines: list[str]) -> dict:
             ip_cidrs.append(parts[1])
 
     rule = {}
-    if domains:          rule["domain"]          = sorted(set(domains))
-    if domain_suffixes:  rule["domain_suffix"]    = sorted(set(domain_suffixes))
-    if domain_keywords:  rule["domain_keyword"]   = sorted(set(domain_keywords))
-    if domain_regex:     rule["domain_regex"]     = sorted(set(domain_regex))
-    if ip_cidrs:         rule["ip_cidr"]          = sorted(set(ip_cidrs))
+    if domains:          rule["domain"]         = sorted(set(domains))
+    if domain_suffixes:  rule["domain_suffix"]   = sorted(set(domain_suffixes))
+    if domain_keywords:  rule["domain_keyword"]  = sorted(set(domain_keywords))
+    if domain_regex:     rule["domain_regex"]    = sorted(set(domain_regex))
+    if ip_cidrs:         rule["ip_cidr"]         = sorted(set(ip_cidrs))
     return rule
 
 
@@ -112,33 +121,6 @@ def to_singbox_source(rule: dict) -> dict:
         "version": 2,
         "rules": [rule] if rule else []
     }
-
-
-def write_route_snippet(out_dir: Path):
-    rule_sets, rules = [], []
-    for name, url, tag in RULES:
-        rule_sets.append({
-            "type": "local",
-            "tag": name,
-            "format": "source",
-            "path": f"./ruleset/{name}.json"
-        })
-        rules.append({
-            "rule_set": name,
-            "outbound": tag
-        })
-
-    snippet = {
-        "_comment": "将 rule_set 和 rules 合并进你的 sing-box config.json",
-        "route": {
-            "rule_set": rule_sets,
-            "rules": rules,
-            "final": "国外"
-        }
-    }
-    path = out_dir / "_route_snippet.json"
-    path.write_text(json.dumps(snippet, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"   📋 路由片段 → {path}")
 
 
 def main():
@@ -159,8 +141,6 @@ def main():
         except Exception as e:
             print(f"   ✗ 失败: {e}", file=sys.stderr)
             errors.append((name, str(e)))
-
-    write_route_snippet(out_dir)
 
     if errors:
         print("\n⚠  以下规则下载失败：")
