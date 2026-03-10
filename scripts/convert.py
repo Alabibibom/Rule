@@ -47,7 +47,6 @@ RULES = [
     # 自定义规则
     ("deepseek",          "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/DeepSeek.txt",          "国外"),
     ("obsidian",          "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/Obsidian插件.txt",      "国内"),
-    ("joplin",            "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/Joplin官方.txt",        "Joplin官方"),
     ("emby",              "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/Emby官方.txt",          "Emby官方"),
     ("reject_custom",     "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/拒绝联网.txt",          "REJECT"),
     ("vps",               "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/VPS.txt",               "国内"),
