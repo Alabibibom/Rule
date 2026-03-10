@@ -1,0 +1,14 @@
+DOMAIN-SUFFIX,cp31.ott.cibntv.net
+DOMAIN-SUFFIX,right.com.cn
+DOMAIN-SUFFIX,api.eskimo.travel
+DOMAIN-SUFFIX,airdroid.com
+DOMAIN-SUFFIX,app.chat.xiaomi.net
+DOMAIN-SUFFIX,snssdk.com
+DOMAIN,staticsns.cdn.bcebos.com
+DOMAIN,paimgcdn-feed.baidu.com
+DOMAIN-SUFFIX,shyingt.asia
+DOMAIN-SUFFIX,info.tuisong.baidu.com
+DOMAIN-SUFFIX,mb3admin.com
+DOMAIN,doh.pub
+DOMAIN,dns.alidns.com
+IP-CIDR,17.0.0.0/8
