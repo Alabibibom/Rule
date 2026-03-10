@@ -2,11 +2,12 @@ name: Convert Surge Rules to sing-box
 
 on:
   schedule:
-    - cron: "0 2 * * *"
+    - cron: "0 0 * * *"
   workflow_dispatch:
   push:
     paths:
       - "scripts/convert.py"
+      - "custom/**"
 
 jobs:
   convert:
@@ -45,6 +46,7 @@ jobs:
             sing-box rule-set compile "$f" -o "output/srs/${name}.srs"
             echo "✓ ${name}.srs"
           done
+          rm -f output/*.json
 
       - name: Commit & push output
         run: |
