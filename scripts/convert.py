@@ -6,9 +6,9 @@ Surge ruleset → sing-box rule_set (JSON source format) converter
 import re, json, sys, time
 from pathlib import Path
 from urllib.request import urlopen, Request
+from urllib.parse import quote
 
 RULES = [
-    # 远程规则
     ("find_my",           "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/FindMy/FindMy.list",           "国内"),
     ("lan_non_ip",        "https://ruleset.skk.moe/List/non_ip/lan.conf",                                                                   "DIRECT"),
     ("lan_ip",            "https://ruleset.skk.moe/List/ip/lan.conf",                                                                       "DIRECT"),
@@ -44,7 +44,7 @@ RULES = [
     ("china_domain",      "https://cdn.jsdelivr.net/gh/Loyalsoldier/surge-rules@release/direct.txt",                                        "国内"),
     ("china_ip",          "https://ruleset.skk.moe/List/ip/china_ip.conf",                                                                  "国内"),
     ("china_ip_ipv6",     "https://ruleset.skk.moe/List/ip/china_ip_ipv6.conf",                                                             "国内"),
-    # 自定义规则（custom 文件夹）
+    # 自定义规则
     ("deepseek",          "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/DeepSeek.txt",          "国外"),
     ("obsidian",          "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/Obsidian插件.txt",      "国内"),
     ("joplin",            "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/Joplin官方.txt",        "Joplin官方"),
@@ -60,10 +60,20 @@ RULES = [
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; ruleset-converter/1.0)"}
 
 
+def encode_url(url: str) -> str:
+    # 只对路径部分的非 ASCII 字符编码，保留 :// 和 / 等结构字符
+    prefix = url[:8]  # https://
+    rest = url[8:]
+    host, _, path = rest.partition("/")
+    encoded_path = quote(path, safe="/:@!$&'()*+,;=~.-_")
+    return prefix + host + "/" + encoded_path
+
+
 def fetch(url: str) -> list[str]:
+    encoded = encode_url(url)
     for attempt in range(3):
         try:
-            req = Request(url, headers=HEADERS)
+            req = Request(encoded, headers=HEADERS)
             with urlopen(req, timeout=15) as r:
                 return r.read().decode("utf-8").splitlines()
         except Exception as e:
