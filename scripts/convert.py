@@ -100,7 +100,7 @@ RULES = [
     # 特殊放行国外
     ("special_out",       "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/特殊放行国外.txt"),
     # 特殊解锁
-    ("special_ cunlock",            "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/解锁.txt"),
+    ("special_unlock",            "https://raw.githubusercontent.com/Alabibibom/Rule/main/custom/解锁.txt"),
 ]
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; ruleset-converter/1.0)"}
