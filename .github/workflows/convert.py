@@ -63,4 +63,113 @@ def fetch(url: str) -> list[str]:
 
 
 def parse_surge(lines: list[str]) -> dict:
-    domains, domain_suff​​​​​​​​​​​​​​​​
+    domains, domain_suffixes, domain_keywords, domain_regex = [], [], [], []
+    ip_cidrs = []
+
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        # domainset 格式（纯域名行）
+        if "," not in line:
+            if line.startswith("."):
+                domain_suffixes.append(line[1:])
+            else:
+                domains.append(line)
+            continue
+
+        # 去掉行内注释
+        line = re.sub(r"\s*#.*$", "", line).strip()
+        if not line:
+            continue
+
+        parts = [p.strip() for p in line.split(",")]
+        rule_type = parts[0].upper() if parts else ""
+
+        if rule_type == "DOMAIN" and len(parts) >= 2:
+            domains.append(parts[1])
+        elif rule_type == "DOMAIN-SUFFIX" and len(parts) >= 2:
+            domain_suffixes.append(parts[1])
+        elif rule_type == "DOMAIN-KEYWORD" and len(parts) >= 2:
+            domain_keywords.append(parts[1])
+        elif rule_type == "DOMAIN-REGEX" and len(parts) >= 2:
+            domain_regex.append(parts[1])
+        elif rule_type in ("IP-CIDR", "IP-CIDR4", "IP-CIDR6") and len(parts) >= 2:
+            ip_cidrs.append(parts[1])
+
+    rule = {}
+    if domains:           rule["domain"]         = sorted(set(domains))
+    if domain_suffixes:   rule["domain_suffix"]   = sorted(set(domain_suffixes))
+    if domain_keywords:   rule["domain_keyword"]  = sorted(set(domain_keywords))
+    if domain_regex:      rule["domain_regex"]    = sorted(set(domain_regex))
+    if ip_cidrs:          rule["ip_cidr"]         = sorted(set(ip_cidrs))
+    return rule
+
+
+def to_singbox_source(rule: dict) -> dict:
+    return {
+        "version": 2,
+        "rules": [rule] if rule else []
+    }
+
+
+def write_route_snippet(out_dir: Path):
+    rule_sets, rules = [], []
+    for name, url, tag in RULES:
+        rule_sets.append({
+            "type": "local",
+            "tag": name,
+            "format": "source",
+            "path": f"./ruleset/{name}.json"
+        })
+        rules.append({
+            "rule_set": name,
+            "outbound": tag
+        })
+
+    snippet = {
+        "_comment": "将 rule_set 和 rules 合并进你的 sing-box config.json",
+        "route": {
+            "rule_set": rule_sets,
+            "rules": rules,
+            "final": "国外"
+        }
+    }
+    path = out_dir / "_route_snippet.json"
+    path.write_text(json.dumps(snippet, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"   📋 路由片段 → {path}")
+
+
+def main():
+    out_dir = Path("output")
+    out_dir.mkdir(exist_ok=True)
+
+    errors = []
+    for name, url, tag in RULES:
+        print(f"⬇  {name} ← {url}")
+        try:
+            lines = fetch(url)
+            rule  = parse_surge(lines)
+            data  = to_singbox_source(rule)
+            dest  = out_dir / f"{name}.json"
+            dest.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+            n = sum(len(v) if isinstance(v, list) else 1 for v in rule.values())
+            print(f"   ✓ {n} 条 → {dest}")
+        except Exception as e:
+            print(f"   ✗ 失败: {e}", file=sys.stderr)
+            errors.append((name, str(e)))
+
+    write_route_snippet(out_dir)
+
+    if errors:
+        print("\n⚠  以下规则下载失败：")
+        for n, e in errors:
+            print(f"   {n}: {e}")
+        sys.exit(1)
+
+    print("\n✅ 全部完成")
+
+
+if __name__ == "__main__":
+    main()
