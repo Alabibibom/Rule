@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Surge ruleset → sing-box rule_set (JSON source format) converter
+Surge / Clash / Shadowrocket / QuantumultX / sing-box JSON
+→ sing-box rule_set (JSON source format) converter
 """
 
 import re, json, sys, time
@@ -60,8 +61,7 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; ruleset-converter/1.0)"}
 
 
 def encode_url(url: str) -> str:
-    # 只对路径部分的非 ASCII 字符编码，保留 :// 和 / 等结构字符
-    prefix = url[:8]  # https://
+    prefix = url[:8]
     rest = url[8:]
     host, _, path = rest.partition("/")
     encoded_path = quote(path, safe="/:@!$&'()*+,;=~.-_")
@@ -82,7 +82,33 @@ def fetch(url: str) -> list[str]:
             time.sleep(3)
 
 
+def detect_format(lines: list[str]) -> str:
+    """自动检测规则格式"""
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        # Clash/Mihomo: 以 "- " 开头
+        if line.startswith("- "):
+            return "clash"
+        # sing-box JSON
+        if line.startswith("{") or line.startswith("["):
+            return "singbox"
+        # QuantumultX: host, host-suffix, host-keyword, ip-cidr
+        if re.match(r"^(host|host-suffix|host-keyword|ip-cidr|ip6-cidr),", line, re.I):
+            return "quantumultx"
+        # Shadowrocket: 和 Surge 格式基本一致，DOMAIN/IP-CIDR 开头
+        # Surge/Shadowrocket: DOMAIN, DOMAIN-SUFFIX, IP-CIDR 等
+        if re.match(r"^(DOMAIN|IP-CIDR|PROCESS-NAME|URL-REGEX)", line):
+            return "surge"
+        # domainset: 纯域名或 .开头
+        if re.match(r"^\.?[a-zA-Z0-9]", line) and "," not in line:
+            return "domainset"
+    return "surge"  # 默认
+
+
 def parse_surge(lines: list[str]) -> dict:
+    """解析 Surge / Shadowrocket / domainset 格式"""
     domains, domain_suffixes, domain_keywords, domain_regex = [], [], [], []
     ip_cidrs = []
 
@@ -91,11 +117,14 @@ def parse_surge(lines: list[str]) -> dict:
         if not line or line.startswith("#"):
             continue
 
+        # domainset 格式（无逗号的纯域名行）
         if "," not in line:
             if line.startswith("."):
                 domain_suffixes.append(line[1:])
             else:
-                domains.append(line)
+                # 过滤掉明显不是域名的行
+                if re.match(r"^[a-zA-Z0-9][\w\-\.]*\.[a-zA-Z]{2,}$", line):
+                    domains.append(line)
             continue
 
         line = re.sub(r"\s*#.*$", "", line).strip()
@@ -125,6 +154,128 @@ def parse_surge(lines: list[str]) -> dict:
     return rule
 
 
+def parse_clash(lines: list[str]) -> dict:
+    """解析 Clash / Mihomo 格式（- TYPE,value,policy）"""
+    domains, domain_suffixes, domain_keywords, domain_regex = [], [], [], []
+    ip_cidrs = []
+
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        # 去掉开头的 "- "
+        if line.startswith("- "):
+            line = line[2:].strip()
+        # 也支持 payload: 下的纯域名行
+        if line.startswith("'") or line.startswith('"'):
+            line = line.strip("'\"")
+
+        line = re.sub(r"\s*#.*$", "", line).strip()
+        if not line:
+            continue
+
+        parts = [p.strip() for p in line.split(",")]
+        rule_type = parts[0].upper() if parts else ""
+
+        if rule_type == "DOMAIN" and len(parts) >= 2:
+            domains.append(parts[1])
+        elif rule_type == "DOMAIN-SUFFIX" and len(parts) >= 2:
+            domain_suffixes.append(parts[1])
+        elif rule_type == "DOMAIN-KEYWORD" and len(parts) >= 2:
+            domain_keywords.append(parts[1])
+        elif rule_type == "DOMAIN-REGEX" and len(parts) >= 2:
+            domain_regex.append(parts[1])
+        elif rule_type in ("IP-CIDR", "IP-CIDR4", "IP-CIDR6", "IP-SUFFIX") and len(parts) >= 2:
+            ip_cidrs.append(parts[1])
+        # 纯域名（payload 列表格式）
+        elif re.match(r"^[a-zA-Z0-9][\w\-\.]*\.[a-zA-Z]{2,}$", line) and "," not in line:
+            if line.startswith("+."):
+                domain_suffixes.append(line[2:])
+            elif line.startswith("."):
+                domain_suffixes.append(line[1:])
+            else:
+                domains.append(line)
+
+    rule = {}
+    if domains:          rule["domain"]         = sorted(set(domains))
+    if domain_suffixes:  rule["domain_suffix"]   = sorted(set(domain_suffixes))
+    if domain_keywords:  rule["domain_keyword"]  = sorted(set(domain_keywords))
+    if domain_regex:     rule["domain_regex"]    = sorted(set(domain_regex))
+    if ip_cidrs:         rule["ip_cidr"]         = sorted(set(ip_cidrs))
+    return rule
+
+
+def parse_quantumultx(lines: list[str]) -> dict:
+    """解析 QuantumultX 格式（host,value / host-suffix,value / ip-cidr,value）"""
+    domains, domain_suffixes, domain_keywords = [], [], []
+    ip_cidrs = []
+
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#") or line.startswith(";"):
+            continue
+
+        line = re.sub(r"\s*#.*$", "", line).strip()
+        if not line:
+            continue
+
+        parts = [p.strip() for p in line.split(",")]
+        rule_type = parts[0].lower() if parts else ""
+
+        if rule_type == "host" and len(parts) >= 2:
+            domains.append(parts[1])
+        elif rule_type == "host-suffix" and len(parts) >= 2:
+            domain_suffixes.append(parts[1])
+        elif rule_type == "host-keyword" and len(parts) >= 2:
+            domain_keywords.append(parts[1])
+        elif rule_type in ("ip-cidr", "ip6-cidr") and len(parts) >= 2:
+            ip_cidrs.append(parts[1])
+
+    rule = {}
+    if domains:          rule["domain"]         = sorted(set(domains))
+    if domain_suffixes:  rule["domain_suffix"]   = sorted(set(domain_suffixes))
+    if domain_keywords:  rule["domain_keyword"]  = sorted(set(domain_keywords))
+    if ip_cidrs:         rule["ip_cidr"]         = sorted(set(ip_cidrs))
+    return rule
+
+
+def parse_singbox_json(lines: list[str]) -> dict:
+    """解析 sing-box rule_set JSON 源格式，直接提取 rules"""
+    try:
+        data = json.loads("\n".join(lines))
+        rules = data.get("rules", [])
+        if rules:
+            # 合并所有 rule 块
+            merged: dict = {}
+            for r in rules:
+                for k, v in r.items():
+                    if isinstance(v, list):
+                        merged.setdefault(k, [])
+                        merged[k].extend(v)
+                    else:
+                        merged[k] = v
+            # 去重排序
+            return {k: sorted(set(v)) if isinstance(v, list) else v
+                    for k, v in merged.items()}
+    except Exception:
+        pass
+    return {}
+
+
+def parse(lines: list[str]) -> dict:
+    fmt = detect_format(lines)
+    print(f"   📄 检测格式: {fmt}")
+    if fmt == "clash":
+        return parse_clash(lines)
+    elif fmt == "quantumultx":
+        return parse_quantumultx(lines)
+    elif fmt == "singbox":
+        return parse_singbox_json(lines)
+    else:
+        return parse_surge(lines)
+
+
 def to_singbox_source(rule: dict) -> dict:
     return {
         "version": 2,
@@ -141,7 +292,7 @@ def main():
         print(f"⬇  {name} ← {url}")
         try:
             lines = fetch(url)
-            rule  = parse_surge(lines)
+            rule  = parse(lines)
             data  = to_singbox_source(rule)
             dest  = out_dir / f"{name}.json"
             dest.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
