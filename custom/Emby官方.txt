@@ -1,0 +1,4 @@
+DOMAIN-SUFFIX,emby.org
+DOMAIN-SUFFIX,emby.media
+DOMAIN-SUFFIX,emby.services
+DOMAIN-SUFFIX,emby.party
